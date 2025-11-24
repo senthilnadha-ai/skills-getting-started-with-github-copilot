@@ -16,8 +16,37 @@
       <section id="activities-container">
         <h3>Available Activities</h3>
         <div id="activities-list">
-          <!-- Activities will be loaded here -->
-          <p>Loading activities...</p>
+          <!-- Example activity card and template for dynamic rendering -->
+          <div class="activity-card" data-activity-id="chess-club">
+            <h4>Chess Club</h4>
+            <p>Join us for weekly matches and strategy sessions.</p>
+
+            <div class="participants">
+              <h5>Participants</h5>
+              <ul class="participant-list">
+                <li class="participant">
+                  <span class="participant-avatar">AL</span>
+                  Alice Lowe
+                </li>
+                <li class="participant">
+                  <span class="participant-avatar">JS</span>
+                  John Smith
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- Template for app.js to clone when rendering activities -->
+          <template id="activity-template">
+            <div class="activity-card">
+              <h4 class="activity-title"></h4>
+              <p class="activity-desc"></p>
+              <div class="participants">
+                <h5>Participants</h5>
+                <ul class="participant-list"></ul>
+              </div>
+            </div>
+          </template>
         </div>
       </section>
 

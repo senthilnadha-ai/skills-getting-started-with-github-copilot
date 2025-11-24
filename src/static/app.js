@@ -4,28 +4,108 @@ document.addEventListener("DOMContentLoaded", () => {
   const signupForm = document.getElementById("signup-form");
   const messageDiv = document.getElementById("message");
 
+  // normalize participants into an array regardless of incoming shape
+  function normalizeParticipants(raw) {
+    if (!raw) return [];
+    if (Array.isArray(raw)) return raw;
+    if (typeof raw === "object") {
+      // if it's a map/object of participants, return its values
+      return Object.values(raw);
+    }
+    // single scalar
+    return [raw];
+  }
+
   // Function to fetch activities from API
   async function fetchActivities() {
     try {
       const response = await fetch("/activities");
       const activities = await response.json();
 
-      // Clear loading message
+      // Clear loading message and reset select
       activitiesList.innerHTML = "";
+      activitySelect.innerHTML = '<option value="">-- Select an activity --</option>';
 
       // Populate activities list
       Object.entries(activities).forEach(([name, details]) => {
         const activityCard = document.createElement("div");
         activityCard.className = "activity-card";
 
-        const spotsLeft = details.max_participants - details.participants.length;
+        const participantsArr = normalizeParticipants(details && details.participants);
+        const maxParticipants = typeof (details && details.max_participants) === "number"
+          ? details.max_participants
+          : null;
+        const spotsLeft = maxParticipants !== null ? Math.max(0, maxParticipants - participantsArr.length) : "—";
 
-        activityCard.innerHTML = `
-          <h4>${name}</h4>
-          <p>${details.description}</p>
-          <p><strong>Schedule:</strong> ${details.schedule}</p>
-          <p><strong>Availability:</strong> ${spotsLeft} spots left</p>
-        `;
+        // Basic info
+        const title = document.createElement("h4");
+        title.textContent = name;
+        const desc = document.createElement("p");
+        desc.textContent = details && details.description ? details.description : "";
+        const schedule = document.createElement("p");
+        schedule.innerHTML = `<strong>Schedule:</strong> ${details && details.schedule ? details.schedule : "TBD"}`;
+        const availability = document.createElement("p");
+        availability.innerHTML = `<strong>Availability:</strong> ${spotsLeft} ${maxParticipants !== null ? "spots left" : ""}`;
+
+        activityCard.appendChild(title);
+        activityCard.appendChild(desc);
+        activityCard.appendChild(schedule);
+        activityCard.appendChild(availability);
+
+        // Participants section
+        const participantsWrap = document.createElement("div");
+        participantsWrap.className = "participants";
+
+        const participantsHeading = document.createElement("h5");
+        participantsHeading.textContent = "Participants";
+        participantsWrap.appendChild(participantsHeading);
+
+        const ul = document.createElement("ul");
+        ul.className = "participant-list";
+
+        if (participantsArr.length > 0) {
+          participantsArr.forEach((p) => {
+            // derive display name and initials
+            let display = "";
+            if (typeof p === "string") {
+              display = p.includes("@") ? p.split("@")[0] : p;
+            } else if (typeof p === "object" && p !== null) {
+              display = p.name || p.email || JSON.stringify(p);
+            } else {
+              display = String(p);
+            }
+
+            const initials = (display
+              .split(/\s+/)
+              .filter(Boolean)
+              .slice(0, 2)
+              .map(s => s[0].toUpperCase())
+              .join("")) || display.slice(0,2).toUpperCase();
+
+            const li = document.createElement("li");
+            li.className = "participant";
+
+            const avatar = document.createElement("span");
+            avatar.className = "participant-avatar";
+            avatar.textContent = initials;
+
+            const text = document.createElement("span");
+            text.className = "participant-name";
+            text.textContent = " " + display;
+
+            li.appendChild(avatar);
+            li.appendChild(text);
+            ul.appendChild(li);
+          });
+        } else {
+          const li = document.createElement("li");
+          li.className = "participant";
+          li.textContent = "No participants yet";
+          ul.appendChild(li);
+        }
+
+        participantsWrap.appendChild(ul);
+        activityCard.appendChild(participantsWrap);
 
         activitiesList.appendChild(activityCard);
 
